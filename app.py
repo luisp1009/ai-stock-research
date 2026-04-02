@@ -30,7 +30,32 @@ def generate_test_report():
 
     existing = DailyReport.query.filter_by(report_date=today).first()
     if existing:
-        return f"Test report already exists for {today}"
+        existing.title = f"Daily Market Research - {today}"
+        existing.slug = f"daily-market-research-{today}"
+        existing.market_summary = (
+            "The market showed mixed action today. Technology remained strong, "
+            "financials were steady, and traders focused on momentum names with "
+            "above-average volume."
+        )
+        existing.full_html = """
+        <h3>Market Overview</h3>
+        <p>Stocks traded mixed with leadership in large-cap technology.</p>
+
+        <h3>Top Stocks to Watch</h3>
+        <ul>
+            <li>NVDA - strong momentum and sector leadership</li>
+            <li>MSFT - steady trend and institutional support</li>
+            <li>AMD - elevated interest and relative strength</li>
+        </ul>
+
+        <h3>Risk Notes</h3>
+        <p>Some names are extended and could be vulnerable to pullbacks.</p>
+        """
+        existing.status = "published"
+        existing.published_at = datetime.utcnow()
+
+        db.session.commit()
+        return f"Test report updated for {today}"
 
     report = DailyReport(
         report_date=today,
@@ -69,10 +94,6 @@ def generate_test_report():
 def generate_ai_report():
     today = date.today()
 
-    existing = DailyReport.query.filter_by(report_date=today).first()
-    if existing:
-        return f"Report already exists for {today}"
-
     structured_data = {
         "market_tone": "Mixed trading with strength in technology and selective momentum names.",
         "market_overview": {
@@ -105,6 +126,19 @@ def generate_ai_report():
 
     try:
         ai_report = generate_market_report(structured_data)
+
+        existing = DailyReport.query.filter_by(report_date=today).first()
+
+        if existing:
+            existing.title = ai_report["title"]
+            existing.slug = f"daily-market-research-{today}"
+            existing.market_summary = ai_report["market_summary"]
+            existing.full_html = ai_report["full_html"]
+            existing.status = "published"
+            existing.published_at = datetime.utcnow()
+
+            db.session.commit()
+            return f"AI report updated for {today}"
 
         report = DailyReport(
             report_date=today,
